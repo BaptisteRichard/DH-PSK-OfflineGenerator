@@ -29,7 +29,7 @@ Both peers need to use this page to generate the shared key, so either give a li
 <li> Enter your own secret again and the desired key size.</li>
 <li> Paste the Phase 1 exhange received from your peer (not yours) in the appropriate text field.</li>
 <li> Click on "Generate PSK" </li>
-<li> (optionnal) Confirm with your peer that your 6 digits validation codes match</li>
+<li> (optionnal) Confirm with your peer that your 9 digits validation codes match</li>
 <li> Copy your secret shared key from the PSK field and voila ! </li>
 </ol>
 
@@ -113,6 +113,11 @@ function pskVerify(psk){
 
 	ret += psk.charAt(200);
 	ret += psk.charAt(250);
+	ret += psk.charAt(280);
+	
+	ret += " ";
+	
+	ret += String(pskSize).padStart(2, '0');
 	
 	if(alphabetAN == alphabet){
 		ret += "1";
