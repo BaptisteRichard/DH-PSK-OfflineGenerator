@@ -6,6 +6,52 @@
 <link rel="SHORTCUT" href="favicon.ico"/>
 <link rel="shortcut icon" href="favicon.ico"/>
 -->
+<style>
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+.red {
+  border-color : red;
+}
+.green {
+  border-color : green;
+}
+.blue {
+  border-color : blue;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 180px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 150%;
+  left: 50%;
+  margin-left: -90px;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+</style>
 </head>
 
 <body>
@@ -19,14 +65,14 @@ Both peers need to use this page to generate the shared key, so either give a li
 
 <h2> Step 1 </h2>
 <ol>
-<li> Enter your own secret. 12 characters at least are recommended, and make it unique. You will need it again in step 2 so write it down.</li>
+<li> Enter your own random seed which you will keep secret, out of alphanumerical characters only. 12 characters at least are recommended, and make it unique. You will need it only once again in step 2.</li>
 <li> Click on "Generate phase 1 exchange" </li>
-<li> Copy all the digits in the "Phase 1" text area and send it to your peer via whatever unsecured channel you want. Wait for them to send you their own Phase 1 exchange, and agree on key size.</li>
+<li> Copy all the digits in the "Phase 1" text area and send it to your peer via whatever unsecured channel you want. Wait for them to send you their own Phase 1 exchange, and agree on key size and alphabet.</li>
 </ol>
 <h2> Step 2 </h2>
 <ol>
 
-<li> Enter your own secret again and the desired key size.</li>
+<li> Enter your own random secret seed again and the desired key size.</li>
 <li> Paste the Phase 1 exhange received from your peer (not yours) in the appropriate text field.</li>
 <li> Click on "Generate PSK" </li>
 <li> (optionnal) Confirm with your peer that your 9 digits validation codes match</li>
@@ -43,7 +89,7 @@ Both peers need to use this page to generate the shared key, so either give a li
 					<input type="radio" name="alpha" value="2" onclick="javascript:setAlphabet(2);"/> Alpha-numeric only
 	
 </div>
-Your own secret : <input type="text" id="secret" /> (recommended at least 12 characters)<br/>
+Your own random secret seed : <input type="text" id="secret" /> (recommended at least 12 characters, alnum only)<br/>
 <div id="answer" >Third-party answer : <textarea id="reply"></textarea></div>
 <br/>
 <input type="submit" id="button" onclick="javascript:compute();" value="go"/>
@@ -105,7 +151,8 @@ function strToDigits(str){
 
 function pskVerify(psk){
 
-	ret = psk.charAt(100);
+    ret = "<span class='tooltip blue'>";
+	ret += psk.charAt(100);
 	ret += psk.charAt(150);
 	ret += psk.charAt(180);
 	
@@ -115,16 +162,19 @@ function pskVerify(psk){
 	ret += psk.charAt(250);
 	ret += psk.charAt(280);
 	
+	ret += "<span class='tooltiptext'>Exchange verification</span></span>";
 	ret += " ";
+	ret += "<span class ='tooltip green'>";
 	
 	ret += String(pskSize).padStart(2, '0');
-	
+	ret += "<span class='tooltiptext'>Key length</span></span>";
+	ret += "<span class='tooltip red'>";
 	if(alphabetAN == alphabet){
 		ret += "1";
 	}else{
 		ret += "2";
 	}
-
+	ret += "<span class='tooltiptext'>Key alphabet</span></span>";
 	return ret;
 }
 
@@ -230,4 +280,3 @@ Version : 1.0.3 (2020-11-24)<br/>
 Created by Globadis (<a href="https://passwords.globadis.com">https://passwords.globadis.com</a>)
 </footer>
 </html>
-
