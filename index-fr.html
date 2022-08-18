@@ -1,0 +1,366 @@
+<html>
+<head>
+<title>Diffie-Hellman offline secret shared key generator</title>
+<!--
+<link rel="favicon" href="favicon.ico"/>
+<link rel="SHORTCUT" href="favicon.ico"/>
+<link rel="shortcut icon" href="favicon.ico"/>
+-->
+<style>
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+.red {
+  border-color : red;
+}
+.green {
+  border-color : green;
+}
+.blue {
+  border-color : blue;
+}
+
+code {
+background-color: #ddd;
+padding-left:10px;
+padding-right:10px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 180px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 150%;
+  left: 50%;
+  margin-left: -90px;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+</style>
+</head>
+
+<body>
+
+<div style="float:right"><a href="index-en.html">English version</a></div>
+
+<a onclick="showHide('instructions')">Afficher/Cacher les instructions d&eacute;taill&eacute;es</a>
+
+<div id="instructions" style="display:none">
+<h1> Instructions compl&egrave;tes </h1>
+
+Cette page est un g&eacute;n&eacute;rateur de cl&eacute; secr&egrave;te partag&eacute;e en deux phases utilisant l'agorithme de Diffie-Helman. <br>
+Elle n'utilise que du Javascript, vous pouvez donc la t&eacute;l&eacute;charger et l'utiliser localement pour plus de s&eacute;curit&eacute;. (clic droit <a href="">ici</a>, enregistrer le lien sous...)<br>
+Les deux partenaires doivent utiliser cette page pour g&eacute;n&eacute;rer la cl&eacute; partag&eacute;e, donc envoyez un lien vers cette page ou le fichier sauvegard&eacute; &àgrave; votre partenaire.<br>
+
+
+<h2> Phase 1 </h2>
+<ol>
+<li> Saisissez une graine unique et al&eacute;atoire (ou utilisez celle pr&eacute;-remplie) consititu&eacute;e uniquement de caract&egrave;res alphanum&eacute;riques. Il est recommand&eacute; d'utiliser minimum 12 caract&egrave;res, et vous en aurez &àgrave; nouveau besoin pour la phase 2, donc notez l&àgrave; ou ne fermez pas la fenêtre avant d'avoir termin&eacute; le processus</li>
+<li> Cliquez sur "Re-g&eacute;n&eacute;rer la phase 1" </li>
+<li> Copiez tous les chiffres affich&eacute;s et envoyez les &àgrave; votre partenaire par le canal non s&eacute;curis&eacute; de votre choix (Mail, Signal, Google Talk, Messenger...)</li>
+</ol>
+<h2> Phase 2 </h2>
+<ol>
+<li> Collez les chiffres envoy&eacute;s par votre partenaire (pas les votres) dans la boite pr&eacute;vue.</li>
+<li> Cliquez sur "G&eacute;n&eacute;rer le mot de passe" </li>
+<li> (optionnel) Confirmez avec votre partenaire que vous avez le même code de validation.</li>
+<li> Copiez votre mot de passe partag&eacute; et voil&àgrave; ! </li>
+</ol>
+</div>
+
+<br>
+
+<h1> G&eacute;n&eacute;rer un mot de passe partag&eacute; avec un partenaire</h1>
+
+Vous avez besoin de partager un mot de passe avec une personne ? Suivez ces instructions pour que vous et votre partenaire g&eacute;n&eacute;riez le même mot de passe sans avoir besoin de l'envoyer.
+
+<h4 onclick="showHide('parameters');"> Modifier les proprit&eacute;t&eacute;s du mot de passe </h4>
+
+<div id="parameters" style="display:none">
+<i>Si vous modifiez cette section, vous devez en aviser votre partenaire qui devra utiliser les mêmes param&egrave;tres. Vous pouvez laisser les param&egrave;tres par d&eacute;faut.</i>
+<br>
+<br>
+	Taille du mot de passe : <input type="text" id="pskSize" value="32" /> caract&egrave;res<br>
+	Alphabet utilis&eacute; : <input type="radio" name="alpha" value="1" onclick="javascript:setAlphabet(1);"/> Tous caract&egrave;res
+					<input type="radio" name="alpha" value="2" onclick="javascript:setAlphabet(2);" checked="checked"/> Seulement Alaphanum&eacute;riques
+</div>
+
+
+
+<h3>Proc&eacute;dure</h3>
+<input id="radio1" type="radio" name="phase" value="1" onclick="javascript:toPhase(1);" /> Phase 1 (pour modifier manuellement la <i>graine</i>, inutile dans la plupart des cas) <br>
+<input id="radio2" type="radio" name="phase" value="2" onclick="javascript:toPhase(2);" checked="checked"/> Phase 2<br>
+
+
+<div id="seed" style="display:none">
+<br>
+<i>Graine</i> : <input type="text" id="secret" size=34 /> ( Laissez celle g&eacute;n&eacute;r&eacute;e automatiquement ou modifiez l&àgrave;, minimum 12 caract&egrave;res, alphanum&eacute;riques seulement)
+</div>
+
+
+<div id="contentPhase1"></div>
+<div id="answer" > 
+
+
+<h3>Collez ici les chiffres envoy&eacute;s par votre partenaire :</h3>
+<textarea id="reply" rows=5 cols=40></textarea></div>
+<br/>
+
+<input type="submit" id="button" onclick="javascript:compute();" value="G&eacute;n&eacute;rez le mot de passe"/>
+<br>
+<br>
+<div id="contentPhase2"></div>
+
+
+<script type="text/javascript">
+
+alphabetFull = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[{]}\|;:,<.>/?";
+
+alphabetAN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+alphabetN = "0123456789";
+
+alphabet = alphabetAN;
+
+
+failure = 0;
+pskSize = 8;
+curPhase = 1;
+
+function setAlphabet(id){
+  if(id==1){
+	alphabet = alphabetFull;
+  }else{
+    alphabet = alphabetAN;
+  }
+}
+
+function randomSeed(){
+
+  result = "";
+  for ( var i = 0; i < 32; i++ ) {
+    result += alphabetAN.charAt(Math.floor(Math.random() * alphabetAN.length));
+   }
+  document.getElementById('secret').value = result;
+}
+
+function showHide(elem){
+
+	if(document.getElementById(elem).style.display != "block"){
+		document.getElementById(elem).style.display = "block";
+	}else{
+	  document.getElementById(elem).style.display = "none"
+	}
+}
+
+function toPhase(phase){
+	curPhase=phase;
+	if(curPhase == 1){
+		document.getElementById('button').value="Re-g&eacute;n&eacute;rer la phase 1";
+		document.getElementById('seed').style.display = "block";
+		document.getElementById('answer').style.display = "none";
+	}else{
+		document.getElementById('button').value="G&eacute;n&eacute;rer le mot de passe";
+		document.getElementById('seed').style.display = "none";
+		document.getElementById('answer').style.display = "block";
+	}
+}
+
+function charToDigit(c){
+
+	return ("00"+alphabet.indexOf(c)).slice(-2);
+}
+
+function strToDigits(str){
+   res = "";
+   for (i=0;i<str.length;i++){
+      t = charToDigit(str.charAt(i));
+	  if (t == -1) { 
+	    failure = 1;
+		alert('Caract&egrave;re invalide ['+str.charAt(i)+'] en position '+i+', merci de v&eacute;rifier vos intrants');
+	  }
+      res += charToDigit(str.charAt(i));
+   }
+   return res;
+}
+
+function pskVerify(psk){
+
+  ret = "<span class='tooltip blue'>";
+	ret += psk.charAt(100);
+	ret += psk.charAt(150);
+	ret += psk.charAt(180);
+	
+	ret += " ";
+
+	ret += psk.charAt(200);
+	ret += psk.charAt(250);
+	ret += psk.charAt(280);
+	
+	ret += "<span class='tooltiptext'>V&eacute;rification</span></span>";
+	ret += " ";
+	ret += "<span class ='tooltip green'>";
+	
+	ret += String(pskSize).padStart(2, '0');
+	ret += "<span class='tooltiptext'>Taille du mot de passe</span></span>";
+	ret += "<span class='tooltip red'>";
+	if(alphabetAN == alphabet){
+		ret += "1";
+	}else{
+		ret += "2";
+	}
+	ret += "<span class='tooltiptext'>Alphabet utilis&eacute;</span></span>";
+	return ret;
+}
+
+function pskToString(psk){
+	chars = 0;
+	i = 0;
+	ret = "";
+	//Half of the printable psk comes from the first digits 
+	while(chars < pskSize/2){
+		digits = psk.slice(i,i+2);
+		if(digits < alphabet.length){
+			ret += alphabet.charAt(digits);
+			chars ++;
+		}
+		i += 2;
+	}
+	
+	i = -2;
+	chars = 0;
+	//HThe other half comes from the last digits. NB : in reverse order
+	while(chars < pskSize/2){
+		digits = psk.slice(i-2,i);
+		if(digits < alphabet.length){
+			ret += alphabet.charAt(digits);
+			chars ++;
+		}
+		i -= 2;
+	}
+
+	return ret;
+}
+
+function modPow(b,e,m){
+	if (m == 1n){
+		return 0n;
+	}else{
+		r = 1n;
+		b = b % m;
+		while(e > 0n){
+			if ((e % 2n ) == 1n){
+				r = (r*b) % m;
+			}
+			e = e / 2n;
+			b = (b ** 2n) % m;
+		}
+		return r
+	}
+}
+
+
+//prime = 406n ** 289n + 289n ** 406n ;
+sgprime = 10n ** 999n + 2222239n;
+prime = sgprime * 2n + 1n;
+
+root=7n;
+
+
+function compute(){
+
+  if(curPhase == 1){
+		computePhase1();
+	}else{
+	  computePhase2();
+	}
+
+}
+
+function computePhase1(){
+
+	secretStr = document.getElementById('secret').value;
+	secret = BigInt(strToDigits(secretStr));
+
+	str = '';
+	if(failure == 1){
+		str += "Il y a des caract&egrave;res non support&eacute;s dans la <i>graine</i>. Merci de corriger.";
+	    failure = 0;
+	}else{
+		  
+	  toSend = modPow(root,secret,prime);
+	  str += '<h3> Envoyez ces chiffres &àgrave; votre partenaire : </h3> '+toSend.toString();
+	  str += '<br>(double cliquez pour tout s&eacute;lectionner)<br>';
+    str += '<br><i>Ne fermez pas cette page tant que vous n\'avez pas reçu les chiffres de votre partenaire !</i><br>';
+    
+	  document.getElementById('contentPhase1').innerHTML = str;
+
+  }
+  document.getElementById("radio2").checked = "checked";
+  toPhase(2);
+}
+
+function computePhase2(){
+
+	secretStr = document.getElementById('secret').value;
+	secret = BigInt(strToDigits(secretStr));
+
+	str = '';
+	if(failure == 1){
+		str += "Il y a des caract&egrave;res non support&eacute;s dans la <i>graine</i>. Merci de corriger.";
+	    failure = 0;
+	}else{
+	
+	  pskSize = parseInt(document.getElementById('pskSize').value);
+	  replyStr = document.getElementById('reply').value;
+	  reply = BigInt(replyStr);
+	  if(reply == toSend){
+		  alert("La réponse du partenaire correspond à vos propres chiffres.\n\nÊtes vous sûr d'avoir correctement copié/collé ce qu'iel vous a envoyé ?");
+	  }
+	  psk = modPow(reply,secret,prime);
+	  str += '<h3>R&eacute;sultat :</h3> Votre mot de passe partag&eacute; est : <code>'+pskToString(psk.toString())+'</code><br>';
+	  str += 'Code de validation : <b>'+pskVerify(psk.toString())+'</b> (confirmez avec votre partenaire que vous avez le même code de validation';
+	  str += '<br>';
+
+
+	}
+
+	document.getElementById('contentPhase2').innerHTML = str;
+
+}
+
+
+randomSeed();
+toPhase(1);
+compute();
+toPhase(2);
+</script>
+<br><br>
+</body>
+<footer>
+Credits : Page under license Creative Commons BY-SA-NC (Attribution, Share alike, Non-Commercial)<br/>
+Version : 1.0.3 (2020-11-24)<br/>
+Created by Globadis (<a href="https://passwords.globadis.com">https://passwords.globadis.com</a>)
+</footer>
+</html>
