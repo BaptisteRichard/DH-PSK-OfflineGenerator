@@ -1,0 +1,368 @@
+<html>
+<head>
+<title>Diffie-Hellman offline secret shared key generator</title>
+<!--
+<link rel="favicon" href="favicon.ico"/>
+<link rel="SHORTCUT" href="favicon.ico"/>
+<link rel="shortcut icon" href="favicon.ico"/>
+-->
+<style>
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+.red {
+  border-color : red;
+}
+.green {
+  border-color : green;
+}
+.blue {
+  border-color : blue;
+}
+
+code {
+background-color: #ddd;
+padding-left:10px;
+padding-right:10px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 180px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 150%;
+  left: 50%;
+  margin-left: -90px;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+</style>
+</head>
+
+<body>
+
+<div style="float:right"><a href="index-fr.html">Version françause</a></div>
+
+<a onclick="showHide('instructions')">Show/Hide instructions</a>
+
+<div id="instructions" style="display:none">
+<h1> Instructions </h1>
+
+This page is a two-step secret shared key generator using Diffie-Hellman algorithm. <br>
+It uses only Javascript so you can download it and run it locally for extra safety. (right click <a href="">here</a>, save link as...)<br>
+Both peers need to use this page to generate the shared key, so either give a link or send the saved page to your peer.<br>
+
+
+<h2> Step 1 </h2>
+<ol>
+<li> Enter your own random seed which you will keep secret, out of alphanumerical characters only. 12 characters at least are recommended, and make it unique. You will need it only once again in step 2.</li>
+<li> Click on "Generate phase 1 exchange" </li>
+<li> Copy all the digits in the "Phase 1" text area and send it to your peer via whatever unsecured channel you want. Wait for them to send you their own Phase 1 exchange, and agree on key size and alphabet.</li>
+</ol>
+<h2> Step 2 </h2>
+<ol>
+
+<li> Enter your own random secret seed again and the desired key size.</li>
+<li> Paste the Phase 1 exhange received from your peer (not yours) in the appropriate text field.</li>
+<li> Click on "Generate PSK" </li>
+<li> (optionnal) Confirm with your peer that your 9 digits validation codes match</li>
+<li> Copy your secret shared key from the PSK field and voila ! </li>
+</ol>
+</div>
+
+<br>
+
+<h1> Generate a shared password with a peer</h1>
+
+You need to share a password with someone ? Follow these instructions and you and your peer will generate the same password without sending it.
+
+<h4 onclick="showHide('parameters');"> Change password parameters (length, alphabet) </h4>
+
+<div id="parameters" style="display:none">
+<i>If you change this, your peer will have to make the same changes. You can use the default parameters safely.</i>
+<br>
+<br>
+	Password length : <input type="text" id="pskSize" value="32" /> characters<br>
+	Alphabet : <input type="radio" name="alpha" value="1" onclick="javascript:setAlphabet(1);"/> All characters
+					<input type="radio" name="alpha" value="2" onclick="javascript:setAlphabet(2);" checked="checked"/> Alphanumeric only
+</div>
+
+
+
+<h3>Process</h3>
+<input id="radio1" type="radio" name="phase" value="1" onclick="javascript:toPhase(1);" /> Phase 1 (to edit the <i>seed</i>, you probably don't need it) <br>
+<input id="radio2" type="radio" name="phase" value="2" onclick="javascript:toPhase(2);" checked="checked"/> Phase 2<br>
+
+
+<div id="seed" style="display:none">
+<br>
+<i>Seed</i> : <input type="text" id="secret" size=34 /> ( Keep the provided random one or type in your own, minimum 12 characters, alphanumeric only)
+</div>
+
+
+<div id="contentPhase1"></div>
+<div id="answer" > 
+
+
+<h3>Paste here the digits sent by your peer</h3>
+<textarea id="reply" rows=5 cols=40></textarea></div>
+<br/>
+
+<input type="submit" id="button" onclick="javascript:compute();" value="Generate password"/>
+<br>
+<br>
+<div id="contentPhase2"></div>
+
+
+<script type="text/javascript">
+
+alphabetFull = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[{]}\|;:,<.>/?";
+
+alphabetAN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+alphabetN = "0123456789";
+
+alphabet = alphabetAN;
+
+
+failure = 0;
+pskSize = 8;
+curPhase = 1;
+
+function setAlphabet(id){
+  if(id==1){
+	alphabet = alphabetFull;
+  }else{
+    alphabet = alphabetAN;
+  }
+}
+
+function randomSeed(){
+
+  result = "";
+  for ( var i = 0; i < 32; i++ ) {
+    result += alphabetAN.charAt(Math.floor(Math.random() * alphabetAN.length));
+   }
+  document.getElementById('secret').value = result;
+}
+
+function showHide(elem){
+
+	if(document.getElementById(elem).style.display != "block"){
+		document.getElementById(elem).style.display = "block";
+	}else{
+	  document.getElementById(elem).style.display = "none"
+	}
+}
+
+function toPhase(phase){
+	curPhase=phase;
+	if(curPhase == 1){
+		document.getElementById('button').value="Re-generate phase 1";
+		document.getElementById('seed').style.display = "block";
+		document.getElementById('answer').style.display = "none";
+	}else{
+		document.getElementById('button').value="Generate password";
+		document.getElementById('seed').style.display = "none";
+		document.getElementById('answer').style.display = "block";
+	}
+}
+
+function charToDigit(c){
+
+	return ("00"+alphabet.indexOf(c)).slice(-2);
+}
+
+function strToDigits(str){
+   res = "";
+   for (i=0;i<str.length;i++){
+      t = charToDigit(str.charAt(i));
+	  if (t == -1) { 
+	    failure = 1;
+		alert('Invalid character ['+str.charAt(i)+'] at position '+i+', please check your input');
+	  }
+      res += charToDigit(str.charAt(i));
+   }
+   return res;
+}
+
+function pskVerify(psk){
+
+  ret = "<span class='tooltip blue'>";
+	ret += psk.charAt(100);
+	ret += psk.charAt(150);
+	ret += psk.charAt(180);
+	
+	ret += " ";
+
+	ret += psk.charAt(200);
+	ret += psk.charAt(250);
+	ret += psk.charAt(280);
+	
+	ret += "<span class='tooltiptext'>Verification</span></span>";
+	ret += " ";
+	ret += "<span class ='tooltip green'>";
+	
+	ret += String(pskSize).padStart(2, '0');
+	ret += "<span class='tooltiptext'>Password length</span></span>";
+	ret += "<span class='tooltip red'>";
+	if(alphabetAN == alphabet){
+		ret += "1";
+	}else{
+		ret += "2";
+	}
+	ret += "<span class='tooltiptext'>Alphabet</span></span>";
+	return ret;
+}
+
+function pskToString(psk){
+	chars = 0;
+	i = 0;
+	ret = "";
+	//Half of the printable psk comes from the first digits 
+	while(chars < pskSize/2){
+		digits = psk.slice(i,i+2);
+		if(digits < alphabet.length){
+			ret += alphabet.charAt(digits);
+			chars ++;
+		}
+		i += 2;
+	}
+	
+	i = -2;
+	chars = 0;
+	//HThe other half comes from the last digits. NB : in reverse order
+	while(chars < pskSize/2){
+		digits = psk.slice(i-2,i);
+		if(digits < alphabet.length){
+			ret += alphabet.charAt(digits);
+			chars ++;
+		}
+		i -= 2;
+	}
+
+	return ret;
+}
+
+function modPow(b,e,m){
+	if (m == 1n){
+		return 0n;
+	}else{
+		r = 1n;
+		b = b % m;
+		while(e > 0n){
+			if ((e % 2n ) == 1n){
+				r = (r*b) % m;
+			}
+			e = e / 2n;
+			b = (b ** 2n) % m;
+		}
+		return r
+	}
+}
+
+
+//prime = 406n ** 289n + 289n ** 406n ;
+sgprime = 10n ** 999n + 2222239n;
+prime = sgprime * 2n + 1n;
+
+root=7n;
+
+
+function compute(){
+
+  if(curPhase == 1){
+		computePhase1();
+	}else{
+	  computePhase2();
+	}
+
+}
+
+function computePhase1(){
+
+	secretStr = document.getElementById('secret').value;
+	secret = BigInt(strToDigits(secretStr));
+
+	str = '';
+	if(failure == 1){
+		str += "Unsupported characters in the <i>seed</i>. Please check your input.";
+	    failure = 0;
+	}else{
+		  
+	  toSend = modPow(root,secret,prime);
+	  str += '<h3>Send those digits to your peer : </h3> '+toSend.toString();
+	  str += '<br>(double click to select all digits)<br>';
+    str += "<br><i>Don't close this window until you received the digits from your peer !</i><br>";
+    
+	  document.getElementById('contentPhase1').innerHTML = str;
+
+  }
+  document.getElementById("radio2").checked = "checked";
+  toPhase(2);
+}
+
+function computePhase2(){
+
+	secretStr = document.getElementById('secret').value;
+	secret = BigInt(strToDigits(secretStr));
+
+	str = '';
+	if(failure == 1){
+		str += "Unsupported characters in the <i>seed</i>. Please check your input.";
+	    failure = 0;
+	}else{
+	
+	  pskSize = parseInt(document.getElementById('pskSize').value);
+	  replyStr = document.getElementById('reply').value;
+	  reply = BigInt(replyStr);
+	  if(reply == toSend){
+		  alert("The peer digits are the same as you own.\n\nAre you sure you copied/pasted what your peer sent to you ?");
+	  }
+	  psk = modPow(reply,secret,prime);
+	  str += '<h3>Result :</h3> Your shared password is : <code>'+pskToString(psk.toString())+'</code><br>';
+	  str += 'Validation code : <b>'+pskVerify(psk.toString())+'</b> (Check with your peer that you share the same validation code)';
+	  str += '<br>';
+
+
+	}
+
+	document.getElementById('contentPhase2').innerHTML = str;
+
+}
+
+
+randomSeed();
+toPhase(1);
+compute();
+toPhase(2);
+</script>
+<br><br>
+</body>
+<footer>
+Credits : Page under license Creative Commons BY-SA-NC (Attribution, Share alike, Non-Commercial)<br/>
+Version : 1.0.3 (2020-11-24)<br/>
+Created by Globadis (<a href="https://passwords.globadis.com">https://passwords.globadis.com</a>)
+</footer>
+</html>
