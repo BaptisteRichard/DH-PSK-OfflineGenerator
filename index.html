@@ -7,48 +7,605 @@
 <link rel="shortcut icon" href="favicon.ico"/>
 -->
 <style>
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
 
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 140px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -75px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.validation {
+  position: relative;
+  display: inline-block;
+}
+
+.red {
+  border-bottom: 1px dotted red;
+}
+.green {
+  border-bottom: 1px dotted green;
+}
+.blue {
+  border-bottom: 1px dotted blue;
+}
+
+code {
+  background-color: #ddd;
+  padding-left:10px;
+  padding-right:10px;
+}
+
+.validation .validationtext {
+  visibility: hidden;
+  width: 180px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 150%;
+  left: 50%;
+  margin-left: -90px;
+}
+
+.validation .validationtext::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.validation:hover .validationtext {
+  visibility: visible;
+}
 </style>
+<script>
+
+/***
+* I18N starts here
+***/
+
+var lang = location.search.split('lang=')[1] || navigator.language || navigator.userLanguage; 
+
+if (lang.startsWith('fr')){
+  lang = 'fr';
+}else {
+  lang = 'en';
+}
+
+text = [];
+
+text['otherLang'] = [];
+text['otherLang']['en'] = "<a href=\"?lang=fr\">Version fran&ccedil;aise</a>";
+text['otherLang']['fr'] = "<a href=\"?lang=en\">English version</a>";
+
+
+
+text['displayInstructions'] = [];
+text['displayInstructions']['en'] = "Show/Hide instructions";
+text['displayInstructions']['fr'] = "Afficher/Cacher les instructions d&eacute;taill&eacute;es";
+
+text['instructions_1'] = [];
+text['instructions_1']['en'] = "<h1> Instructions </h1>\
+\
+This page is a two-step secret shared key generator using Diffie-Hellman algorithm. <br>\
+It uses only Javascript so you can download it and run it locally for extra safety. (right click <a href=\"\">here</a>, save link as...)<br>\
+Both peers need to use this page to generate the shared key, so either give a link or send the saved page to your peer.<br>\
+\
+\
+<h2> Step 1 </h2>\
+<ol>\
+<li> Enter your own random seed which you will keep secret, out of alphanumerical characters only. 12 characters at least are recommended, and make it unique. You will need it only once again in step 2.</li>\
+<li> Click on \"Generate phase 1 exchange\" </li>\
+<li> Copy all the digits in the \"Phase 1\" text area and send it to your peer via whatever unsecured channel you want. Wait for them to send you their own Phase 1 exchange, and agree on key size and alphabet.</li>\
+</ol>\
+<h2> Step 2 </h2>\
+<ol>\
+\
+<li> Enter your own random secret seed again and the desired key size.</li>\
+<li> Paste the Phase 1 exhange received from your peer (not yours) in the appropriate text field.</li>\
+<li> Click on \"Generate PSK\" </li>\
+<li> (optionnal) Confirm with your peer that your 9 digits validation codes match</li>\
+<li> Copy your secret shared key from the PSK field and voila ! </li>\
+</ol>";
+text['instructions_1']['fr'] = "<h1> Instructions compl&egrave;tes </h1>\
+\
+Cette page est un g&eacute;n&eacute;rateur de cl&eacute; secr&egrave;te partag&eacute;e en deux phases utilisant l'agorithme de Diffie-Helman. <br>\
+Elle n'utilise que du Javascript, vous pouvez donc la t&eacute;l&eacute;charger et l'utiliser localement pour plus de s&eacute;curit&eacute;. (clic droit <a href=\"\">ici</a>, enregistrer le lien sous...)<br>\
+Les deux partenaires doivent utiliser cette page pour g&eacute;n&eacute;rer la cl&eacute; partag&eacute;e, donc envoyez un lien vers cette page ou le fichier sauvegard&eacute; &agrave; votre partenaire.<br>\
+\
+<h2> Phase 1 </h2>\
+<ol>\
+<li> Saisissez une graine unique et al&eacute;atoire (ou utilisez celle pr&eacute;-remplie) consititu&eacute;e uniquement de caract&egrave;res alphanum&eacute;riques. \
+Il est recommand&eacute; d'utiliser minimum 12 caract&egrave;res, et vous en aurez &agrave; nouveau besoin pour la phase 2, donc notez l&agrave; ou ne fermez pas la fen&ecirc;tre avant d'avoir termin&eacute; le processus</li>\
+<li> Cliquez sur \"Re-g&eacute;n&eacute;rer la phase 1\" </li>\
+<li> Copiez tous les chiffres affich&eacute;s et envoyez les &agrave; votre partenaire par le canal non s&eacute;curis&eacute; de votre choix (Mail, Signal, Google Talk, Messenger...)</li>\
+</ol>\
+<h2> Phase 2 </h2>\
+<ol>\
+<li> Collez les chiffres envoy&eacute;s par votre partenaire (pas les votres) dans la boite pr&eacute;vue.</li>\
+<li> Cliquez sur \"G&eacute;n&eacute;rer le mot de passe\" </li>\
+<li> (optionnel) Confirmez avec votre partenaire que vous avez le m&ecirc;me code de validation.</li>\
+<li> Copiez votre mot de passe partag&eacute; et voil&agrave; ! </li>\
+</ol>";
+
+
+text['genTitle'] = [];
+text['genTitle']['en'] = "Generate a shared password with a peer";
+text['genTitle']['fr'] = "G&eacute;n&eacute;rer un mot de passe partag&eacute; avec un partenaire";
+
+text['genDesc'] = [];
+text['genDesc']['en'] = "You need to share a password with someone ? Follow these instructions and you and your peer will generate the same password without sending it.";
+text['genDesc']['fr'] = "Vous avez besoin de partager un mot de passe avec une personne ? Suivez ces instructions pour que vous et votre partenaire g&eacute;n&eacute;riez le m&ecirc;me mot de passe sans avoir besoin de l'envoyer.";
+
+text['showParams'] = [];
+text['showParams']['en'] = "Change password parameters (length, alphabet)";
+text['showParams']['fr'] = "Modifier les proprit&eacute;t&eacute;s du mot de passe ";
+
+text['paramsDesc'] = [];
+text['paramsDesc']['en'] = "If you change this, your peer will have to make the same changes. You can use the default parameters safely.";
+text['paramsDesc']['fr'] = "Si vous modifiez cette section, vous devez en aviser votre partenaire qui devra utiliser les m&ecirc;mes param&egrave;tres. Vous pouvez laisser les param&egrave;tres par d&eacute;faut.";
+
+text['pskLength'] = [];
+text['pskLength']['en'] = "Password length";
+text['pskLength']['fr'] = "Taille du mot de passe";
+
+text['characters'] = [];
+text['characters']['en'] = "characters";
+text['characters']['fr'] = "caract&egrave;res";
+
+text['pskAlphabet'] = [];
+text['pskAlphabet']['en'] = "Password alphabet";
+text['pskAlphabet']['fr'] = "Alphabet utilis&eacute;";
+
+text['allCharacters'] = [];
+text['allCharacters']['en'] = "All characters";
+text['allCharacters']['fr'] = "Tous caract&egrave;res";
+
+text['onlyAlnum'] = [];
+text['onlyAlnum']['en'] = "Alphanumeric only";
+text['onlyAlnum']['fr'] = "Seulement Alphanum&eacute;riques";
+
+text['procedure'] = [];
+text['procedure']['en'] = "Procedure";
+text['procedure']['fr'] = "Proc&eacute;dure";
+
+text['seed'] = [];
+text['seed']['en'] = "seed";
+text['seed']['fr'] = "graine";
+
+text['phase1'] = [];
+text['phase1']['en'] = "Phase 1 (to edit the <i>"+text['seed'][lang]+"</i>, you probably don't need it)" ;
+text['phase1']['fr'] = "Phase 1 (pour modifier manuellement la <i>"+text['seed'][lang]+"</i>, inutile dans la plupart des cas)";
+
+text['seedDesc'] = [];
+text['seedDesc']['en'] = "( Keep the provided random one or type in your own, minimum 12 characters, alphanumeric only)";
+text['seedDesc']['fr'] = "( Laissez celle g&eacute;n&eacute;r&eacute;e automatiquement ou modifiez l&agrave;, minimum 12 caract&egrave;res, alphanum&eacute;riques seulement)";
+
+text['sendNumbers'] = [];
+text['sendNumbers']['en'] = "Send those digits to your peer";
+text['sendNumbers']['fr'] = "Envoyez ces chiffres &agrave; votre partenaire";
+
+text['copyClipboard'] = [];
+text['copyClipboard']['en'] = "Copy to clipboard";
+text['copyClipboard']['fr'] = "Copier dans le presse-papier";
+
+text['copied'] = [];
+text['copied']['en'] = "Copied";
+text['copied']['fr'] = "Copi&eacute;";
+
+text['dontclose'] = [];
+text['dontclose']['en'] = "Don't close this window until you received the digits from your peer !";
+text['dontclose']['fr'] = "Ne fermez pas cette page tant que vous n\'avez pas re&ccedil;u les chiffres de votre partenaire !";
+
+text['pasteNumbers'] = [];
+text['pasteNumbers']['en'] = "Paste here the digits sent by your peer";
+text['pasteNumbers']['fr'] = "Collez ici les chiffres envoy&eacute;s par votre partenaire";
+
+text['result'] = [];
+text['result']['en'] = "Result";
+text['result']['fr'] = "R&eacute;sultat";
+
+text['sharedPwd'] = [];
+text['sharedPwd']['en'] = "Your shared password is";
+text['sharedPwd']['fr'] = "Votre mot de passe partag&eacute; est";
+
+text['validationCode'] = [];
+text['validationCode']['en'] = "Validation code";
+text['validationCode']['fr'] = "Code de validation";
+
+text['confirmValidation'] = [];
+text['confirmValidation']['en'] = "(Check with your peer that you share the same validation code)";
+text['confirmValidation']['fr'] = "(confirmez avec votre partenaire que vous avez le même code de validation)";
+
+text['buttonP1'] = [];
+text['buttonP1']['en'] = "Re-generate phase 1";
+text['buttonP1']['fr'] = "Re-générer la phase 1";
+
+text['buttonP2'] = [];
+text['buttonP2']['en'] = "Generate password";
+text['buttonP2']['fr'] = "Générer le mot de passe";
+
+text['errInvalidChar_1'] = [];
+text['errInvalidChar_1']['en'] = "Invalid character";
+text['errInvalidChar_1']['fr'] = "Caractère invalide";
+
+text['errInvalidChar_2'] = [];
+text['errInvalidChar_2']['en'] = "at position";
+text['errInvalidChar_2']['fr'] = "en position";
+
+text['errInvalidChar_3'] = [];
+text['errInvalidChar_3']['en'] = ", please check your input";
+text['errInvalidChar_3']['fr'] = ", veuillez vérifier vos intrants";
+
+text['verification'] = [];
+text['verification']['en'] = "Verification";
+text['verification']['fr'] = "V&eacute;rification";
+
+
+text['sameNumbers'] = [];
+text['sameNumbers']['en'] = "The peer digits are the same as you own.\n\nAre you sure you copied/pasted what your peer sent to you ?";
+text['sameNumbers']['fr'] = "La réponse du partenaire correspond à vos propres chiffres.\n\nÊtes vous sûr d'avoir correctement copié/collé ce qu'iel vous a envoyé ?";
+
+
+
+/****
+* I18N stops here 
+***/
+
+</script>
 </head>
 
 <body>
 
-<center>
+<div style="float:right"><script>document.write(text['otherLang'][lang]);</script></div>
 
-<div style="">
-<a href="index-fr.html">
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="#ED2939"/><rect width="200" height="200" fill="#fff"/><rect width="100" height="200" fill="#002395"/></svg><br>
-Fran&ccedil;ais
-</a>
+
+<a onclick="showHide('instructions')"><script>document.write(text['displayInstructions'][lang]);</script></a>
+
+<div id="instructions" style="display:none">
+  <script>document.write(text['instructions_1'][lang]);</script>
 </div>
 
-<div style="">
-<a href="index-en.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="300" height="200">
-<clipPath id="s">
-	<path d="M0,0 v30 h60 v-30 z"/>
-</clipPath>
-<clipPath id="t">
-	<path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/>
-</clipPath>
-<g clip-path="url(#s)">
-	<path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
-	<path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
-	<path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
-	<path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
-	<path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
-</g>
-</svg>
 <br>
-English
+
+<h1><script>document.write(text['genTitle'][lang]);</script></h1>
+
+<script>document.write(text['genDesc'][lang]);</script><br>
+
+<h4 onclick="showHide('parameters');"><script>document.write(text['showParams'][lang]);</script></h4>
+
+<div id="parameters" style="display:none">
+<i><script>document.write(text['paramsDesc'][lang]);</script></i>
+<br>
+<br>
+  <script>document.write(text['pskLength'][lang]);</script> : <input type="text" id="pskSize" value="32" /> <script>document.write(text['characters'][lang]);</script><br>
+  <script>document.write(text['pskAlphabet'][lang]);</script>  : <input type="radio" name="alpha" value="1" onclick="javascript:setAlphabet(1);"/> <script>document.write(text['allCharacters'][lang]);</script>
+          <input type="radio" name="alpha" value="2" onclick="javascript:setAlphabet(2);" checked="checked"/> <script>document.write(text['onlyAlnum'][lang]);</script>
 </div>
 
-</a>
 
-</center>
+
+<h3><script>document.write(text['procedure'][lang]);</script></h3>
+<input id="radio1" type="radio" name="phase" value="1" onclick="javascript:toPhase(1);" /> <script>document.write(text['phase1'][lang]);</script><br>
+<input id="radio2" type="radio" name="phase" value="2" onclick="javascript:toPhase(2);" checked="checked"/> Phase 2<br>
+
+
+<div id="phase1" style="display:none">
+  <br>
+  <i><script>document.write(text['seed'][lang]);</script></i> : <input type="text" id="secret" size=34 /> <script>document.write(text['seedDesc'][lang]);</script>
+</div>
+
+<div id="phase2" style="display:none";>
+  <h3> <script>document.write(text['sendNumbers'][lang]);</script> : </h3> 
+  <span id="contentPhase1"></span>
+  <div class="tooltip" >
+    <button onclick="copyToClipboard('contentPhase1','tooltipAnswer')" onmouseout="outFunc('tooltipAnswer')">
+    <span class="tooltiptext" id="tooltipAnswer"><script>document.write(text['copyClipboard'][lang]);</script></span>
+    <script>document.write(text['copyClipboard'][lang]);</script>
+    </button>
+  </div>
+  
+  <br><i><script>document.write(text['dontclose'][lang]);</script></i><br>
+
+  <div id="answer"> 
+  </div>
+
+  <h3><script>document.write(text['pasteNumbers'][lang]);</script> :</h3>
+  <textarea id="reply" rows=5 cols=40></textarea></div>
+  <br/>
+
+  <input type="submit" id="button" onclick="javascript:compute();" value="default"/>
+  <br>
+  <br>
+  
+
+</div>
+
+<div id="result" style="display:none;">
+  <h3><script>document.write(text['result'][lang]);</script> :</h3> <script>document.write(text['sharedPwd'][lang]);</script> : <code id="psk"></code> 
+  <div class="tooltip" >
+    <button onclick="copyToClipboard('psk','tooltipResult')" onmouseout="outFunc('tooltipResult')">
+    <span class="tooltiptext" id="tooltipResult"><script>document.write(text['copyClipboard'][lang]);</script></span>
+    <script>document.write(text['copyClipboard'][lang]);</script>
+    </button>
+  </div>
+  <br>
+  <script>document.write(text['validationCode'][lang]);</script> : <b id="pskValidation"></b> <script>document.write(text['confirmValidation'][lang]);</script>
+</div>
+
+
+
+<script type="text/javascript">
+
+alphabetFull = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[{]}\|;:,<.>/?";
+
+alphabetAN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+alphabetN = "0123456789";
+
+alphabet = alphabetAN;
+
+
+failure = 0;
+pskSize = 8;
+curPhase = 1;
+
+function setAlphabet(id){
+  if(id==1){
+  alphabet = alphabetFull;
+  }else{
+    alphabet = alphabetAN;
+  }
+}
+
+function randomSeed(){
+
+  result = "";
+  for ( var i = 0; i < 32; i++ ) {
+    result += alphabetAN.charAt(Math.floor(Math.random() * alphabetAN.length));
+   }
+  document.getElementById('secret').value = result;
+}
+
+function showHide(elem){
+
+  if(document.getElementById(elem).style.display != "block"){
+    document.getElementById(elem).style.display = "block";
+  }else{
+    document.getElementById(elem).style.display = "none"
+  }
+}
+
+function toPhase(phase){
+  curPhase=phase;
+  if(curPhase == 1){
+    document.getElementById('button').value= text['buttonP1'][lang];
+    document.getElementById('phase1').style.display = "block";
+    document.getElementById('phase2').style.display = "none";
+    document.getElementById('result').style.display = "none";
+  }else{
+    document.getElementById('button').value=text['buttonP2'][lang];
+    document.getElementById('phase1').style.display = "none";
+    document.getElementById('phase2').style.display = "block";
+    document.getElementById('result').style.display = "none";
+  }
+}
+
+function charToDigit(c){
+
+  return ("00"+alphabet.indexOf(c)).slice(-2);
+}
+
+function strToDigits(str){
+  res = "";
+  for (i=0;i<str.length;i++){
+    t = charToDigit(str.charAt(i));
+    if (t == -1) { 
+      failure = 1;
+      alert(text['errInvalidChar_1'][lang]+'['+str.charAt(i)+']'+text['errInvalidChar_2'][lang]+i+text['errInvalidChar_3'][lang]);
+    }
+    res += t;
+  }
+  return res;
+}
+
+function pskVerify(psk){
+
+  ret = "<span class='validation blue'>";
+  ret += psk.charAt(100);
+  ret += psk.charAt(150);
+  ret += psk.charAt(180);
+  
+  ret += " ";
+
+  ret += psk.charAt(200);
+  ret += psk.charAt(250);
+  ret += psk.charAt(280);
+  
+  ret += "<span class='validationtext'>"+text['verification'][lang]+"</span></span>";
+  ret += " ";
+  ret += "<span class ='validation green'>";
+  
+  ret += String(pskSize).padStart(2, '0');
+  ret += "<span class='validationtext'>"+text['pskLength'][lang]+"</span></span>";
+  ret += "<span class='validation red'>";
+  if(alphabetAN == alphabet){
+    ret += "1";
+  }else{
+    ret += "2";
+  }
+  ret += "<span class='validationtext'>"+text['pskAlphabet'][lang]+"</span></span>";
+  return ret;
+}
+
+function pskToString(psk){
+  chars = 0;
+  i = 0;
+  ret = "";
+  //Half of the printable psk comes from the first digits 
+  while(chars < pskSize/2){
+    digits = psk.slice(i,i+2);
+    if(digits < alphabet.length){
+      ret += alphabet.charAt(digits);
+      chars ++;
+    }
+    i += 2;
+  }
+  
+  i = -2;
+  chars = 0;
+  //HThe other half comes from the last digits. NB : in reverse order
+  while(chars < pskSize/2){
+    digits = psk.slice(i-2,i);
+    if(digits < alphabet.length){
+      ret += alphabet.charAt(digits);
+      chars ++;
+    }
+    i -= 2;
+  }
+
+  return ret;
+}
+
+function modPow(b,e,m){
+  if (m == 1n){
+    return 0n;
+  }else{
+    r = 1n;
+    b = b % m;
+    while(e > 0n){
+      if ((e % 2n ) == 1n){
+        r = (r*b) % m;
+      }
+      e = e / 2n;
+      b = (b ** 2n) % m;
+    }
+    return r
+  }
+}
+
+
+sgprime = 10n ** 999n + 2222239n;
+prime = sgprime * 2n + 1n;
+
+root=7n;
+
+
+function compute(){
+
+  if(curPhase == 1){
+    computePhase1();
+  }else{
+    computePhase2();
+  }
+
+}
+
+function computePhase1(){
+
+  secretStr = document.getElementById('secret').value;
+  secret = BigInt(strToDigits(secretStr));
+
+  str = '';
+  if(failure == 1){
+    failure = 0;
+  }else{
+    toSend=modPow(root,secret,prime).toString();
+    document.getElementById('contentPhase1').innerHTML = toSend;
+    document.getElementById("radio2").checked = "checked";
+    toPhase(2);
+  }
+}
+
+function computePhase2(){
+
+  secretStr = document.getElementById('secret').value;
+  secret = BigInt(strToDigits(secretStr));
+
+  str = '';
+  if(failure == 1){
+    failure = 0;
+  }else{
+  
+    pskSize = parseInt(document.getElementById('pskSize').value);
+    replyStr = document.getElementById('reply').value;
+    reply = BigInt(replyStr);
+    if(reply == toSend){
+      alert(text['sameNumbers'][lang]);
+    }
+    
+    psk=modPow(reply,secret,prime).toString()
+    
+    document.getElementById('psk').innerHTML = pskToString(psk);
+    document.getElementById('pskValidation').innerHTML = pskVerify(psk);
+
+  }
+
+  document.getElementById('result').style.display = 'block';
+}
+
+function copyToClipboard(elem,tooltipElm) {
+  var copyText = document.getElementById(elem).innerHTML;
+  navigator.clipboard.writeText(copyText);
+  
+  var tooltip = document.getElementById(tooltipElm);
+  tooltip.innerHTML = text['copied'][lang];
+}
+
+function outFunc(tooltipElm) {
+  var tooltip = document.getElementById(tooltipElm);
+  tooltip.innerHTML = text['copyClipboard'][lang];
+}
+
+
+randomSeed();
+toPhase(1);
+compute();
+toPhase(2);
+</script>
+<br><br>
 </body>
 <footer>
 Credits : Page under license Creative Commons BY-SA-NC (Attribution, Share alike, Non-Commercial)<br/>
-Version : 1.1 (2022-08-18)<br/>
+Version : 1.2 (2022-08-22)<br/>
 Created by Globadis (<a href="https://passwords.globadis.com">https://passwords.globadis.com</a>)
 </footer>
 </html>
